@@ -20,7 +20,9 @@
     "groq-sdk": "^1.1.2",
     "multer": "^2.1.1",
     "openai": "^6.35.0",
-    "pdf-parse": "^1.1.1"
+    "pdf-parse": "^1.1.1",
+    "pdf2json": "^4.0.3",
+    "pdfjs-dist": "^5.7.284"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"

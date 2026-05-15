@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const agentController = require('../controllers/agent.controller');
+const chunkagentController = require ('../controllers/chunkagent.controller')
 const upload = multer({
     dest: 'uploads/'
 });
@@ -63,11 +64,15 @@ router.get('/gemini-test',
 
 
 router.post('/generate-testcases',
-    agentController.generateTestCases
+    // agentController.generateTestCases
+    chunkagentController.generateTestCases
+
 );
 
 router.post('/upload-frs',
     upload.single('file'),
-    agentController.uploadFrs
+    // agentController.uploadFrs
+    chunkagentController.uploadFrs
+
 );
 module.exports = router;

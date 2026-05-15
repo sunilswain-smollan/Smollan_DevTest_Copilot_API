@@ -5,78 +5,118 @@ const groq = new Groq({
 });
 
 exports.agentGroqService = async (requirement) => {
+
   try {
 
-    const response = await groq.chat.completions.create({
+    const response =
+      await groq.chat.completions.create({
+
       model: "llama-3.1-8b-instant",
+
       messages: [
         {
           role: "system",
+
           content: `
-          Return ONLY JSON in this format:
-          
-          {
-            "testCases": [
-              {
-                "testCaseId": "",
-                "testCaseName": "",
-                "description": "",
-                "steps": [
-                  {
-                    "stepId": "",
-                    "action": "",
-                    "expectedResult": ""
-                  }
-                ]
-              }
-            ]
-          }
-          
-          Do not change keys.
-          Do not add extra text.
-          `        },
+You are a senior QA engineer.
+
+Generate concise software test cases.
+
+Rules:
+- Return plain text only
+- One test case per line
+- No JSON
+- No markdown
+- No numbering
+
+Format strictly:
+Scenario | Type | Priority
+
+Allowed Types:
+Functional
+Validation
+Boundary
+Negative
+UI
+Security
+Performance
+
+Allowed Priorities:
+Low
+Medium
+High
+Critical
+
+Example:
+Verify login with valid credentials | Functional | High
+`
+        },
+
         {
           role: "user",
           content: requirement
         }
       ],
-      temperature: 0.3
+
+      temperature:1
+
     });
 
-    let output = response.choices[0].message.content;
+    let output =
+      response.choices[0].message.content;
 
-// 🔥 Extract JSON from markdown (```json ... ```)
-const jsonMatch = output.match(/```json([\s\S]*?)```/);
+    console.log("Raw Output:", output);
 
-let cleanJson = jsonMatch ? jsonMatch[1] : output;
+    const lines = output
+      .split('\n')
+      .map(x => x.trim())
+      .filter(x => x);
 
-let parsed;
+    const testCases =
+      lines.map((line, index) => {
 
-try {
-  parsed = JSON.parse(cleanJson);
-} catch (e) {
-  parsed = {
-    testCases: [{
-      id: "PARSE_ERROR",
-      scenario: output,
-      type: "System",
-      priority: "High"
-    }]
-  };
-}
+      const parts =
+        line.split('|');
 
-// return parsed;
-return {
-  testCases: parsed.testCases.map((t, index) => ({
-    id: t.testCaseId || `TC${index + 1}`,
-    scenario: t.testCaseName || t.description,
-    type: "Functional",
-    priority: "Medium"
-  }))
-};
+      return {
+
+        id:
+          `TC${String(index + 1).padStart(3, '0')}`,
+
+        scenario:
+          parts[0]?.trim() || '',
+
+        type:
+          parts[1]?.trim() || 'NA',
+
+        priority:
+          parts[2]?.trim() || 'NA'
+
+      };
+
+    });
+
+    return {
+      testCases
+    };
 
   } catch (error) {
+
     console.error("Groq Error:", error);
-    throw error;
+
+    return {
+
+      testCases: [{
+
+        id: 'ERROR',
+
+        scenario: error.message,
+
+        type: 'System',
+
+        priority: 'High'
+
+      }]
+    };
   }
 };
